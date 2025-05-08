@@ -11,3 +11,18 @@ jobs:
       - run: docker login -u ${{ secrets.DOCKER_USERNAME }} -p ${{ secrets.DOCKER_PASSWORD }}
       - run: docker build -t kgillett5/docker-react -f dockerfile.dev .
       - run: docker run -e CI=true kgillett5/docker-react npm test
+
+      - name: Generate deployment package
+        run: zip -r deploy.zip . -x '*.git*'
+
+      - name: Deploy to EB
+        uses: kgillett5/docker-react
+        with:
+          aws_access_key: ${{ secrets.AWS_ACCESS_KEY }}
+          aws_secret_key: ${{ secrets.AWS_ACCESS_SECRET }}
+          application_name: Frontend
+          environment_name: Frontend-env
+          existing_bucket_name: elasticbeanstalk-eu-north-1-736496772643
+          region: eu-north-1
+          version_label: ${{ github.sha }}
+          deployment_package: deploy.zip
